@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class KitModule extends ZModule {
 
     private final List<Kit> kits = new ArrayList<>();
-    private KitDisplay display = KitDisplay.IN_LINE;
+    private KitDisplay display;
 
     public KitModule(ZEssentialsPlugin plugin) {
         super(plugin, "kits");

@@ -8,6 +8,7 @@ import fr.maxlego08.menu.MenuItemStack;
 import fr.maxlego08.menu.api.requirement.Action;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
@@ -18,14 +19,16 @@ public class ZKit extends ZUtils implements Kit {
     private final String name;
     private final long cooldown;
     private final List<Action> actions;
-    private List<MenuItemStack> menuItemStacks;
+    private List<ItemStack> items;
+    private List<MenuItemStack> menuItems;
 
-    public ZKit(EssentialsPlugin plugin, String displayName, String name, long cooldown, List<MenuItemStack> menuItemStacks, List<Action> actions) {
+    public ZKit(EssentialsPlugin plugin, String displayName, String name, long cooldown, List<ItemStack> items, List<MenuItemStack> menuItems, List<Action> actions) {
         this.plugin = plugin;
         this.displayName = displayName;
         this.name = name;
         this.cooldown = cooldown;
-        this.menuItemStacks = menuItemStacks;
+        this.items = items;
+        this.menuItems = menuItems;
         this.actions = actions;
     }
 
@@ -33,6 +36,9 @@ public class ZKit extends ZUtils implements Kit {
     public long getCooldown() {
         return this.cooldown;
     }
+
+    @Override
+    public List<ItemStack> getItems() { return this.items; }
 
     @Override
     public String getName() {
@@ -45,19 +51,20 @@ public class ZKit extends ZUtils implements Kit {
     }
 
     @Override
-    public List<MenuItemStack> getMenuItemStacks() {
-        return menuItemStacks;
+    public List<MenuItemStack> getMenuItems() {
+        return menuItems;
     }
 
     @Override
     public void give(Player player) {
-        this.menuItemStacks.forEach(menuItemStack -> this.plugin.give(player, menuItemStack.build(player, false)));
+        this.items.forEach(item -> this.plugin.give(player, item));
     }
 
     @Override
-    public void setItems(List<MenuItemStack> menuItemStacks) {
-        this.menuItemStacks = menuItemStacks;
-    }
+    public void setItems(List<ItemStack> menuItemStacks) { this.items = menuItemStacks; }
+
+    @Override
+    public void setMenuItems(List<MenuItemStack> items) { this.menuItems = items; }
 
     @Override
     public List<Action> getActions() {

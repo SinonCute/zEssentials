@@ -19,8 +19,8 @@ public class KitInventoryHolder implements InventoryHolder {
         this.kit = kit;
         this.inventory = Bukkit.createInventory(this, 54, "Kit Editor: " + kit.getName());
 
-        for (int index = 0; index != Math.min(54, kit.getMenuItemStacks().size()); index++) {
-            MenuItemStack menuItemStack = kit.getMenuItemStacks().get(index);
+        for (int index = 0; index != Math.min(54, kit.getMenuItems().size()); index++) {
+            MenuItemStack menuItemStack = kit.getMenuItems().get(index);
             inventory.setItem(index, menuItemStack.build(player, false));
         }
     }

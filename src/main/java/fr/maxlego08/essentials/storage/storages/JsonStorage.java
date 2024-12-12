@@ -15,6 +15,7 @@ import fr.maxlego08.essentials.api.dto.UserEconomyRankingDTO;
 import fr.maxlego08.essentials.api.dto.UserVoteDTO;
 import fr.maxlego08.essentials.api.dto.VaultDTO;
 import fr.maxlego08.essentials.api.dto.VaultItemDTO;
+import fr.maxlego08.essentials.api.dto.*;
 import fr.maxlego08.essentials.api.economy.Economy;
 import fr.maxlego08.essentials.api.home.Home;
 import fr.maxlego08.essentials.api.mailbox.MailBoxItem;
@@ -457,5 +458,21 @@ public class JsonStorage extends StorageHelper implements IStorage {
     @Override
     public void deleteWorldData(String worldName) {
         throw new NotImplementedException("upsertFly is not implemented, use MYSQL storage");
+    }
+
+    @Override
+    public void createKit(String key, String displayName, long cooldown, List<String> actions, List<String> items) {
+        throw new NotImplementedException("upsertFly is not implemented, use MYSQL storage");
+
+    }
+
+    @Override
+    public List<KitDTO> getKits() {
+        throw new NotImplementedException("upsertFly is not implemented, use MYSQL storage");
+    }
+
+    @Override
+    public void deleteKit(String key) {
+
     }
 }

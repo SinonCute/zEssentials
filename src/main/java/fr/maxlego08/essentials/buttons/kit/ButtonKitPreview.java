@@ -31,9 +31,9 @@ public class ButtonKitPreview extends ZButton {
         Kit kit = user.getKitPreview();
         if (kit == null) return;
 
-        for (int index = 0; index != Math.min(this.slots.size(), kit.getMenuItemStacks().size()); index++) {
+        for (int index = 0; index != Math.min(this.slots.size(), kit.getMenuItems().size()); index++) {
             int slot = this.slots.get(index);
-            MenuItemStack menuItemStack = kit.getMenuItemStacks().get(index);
+            MenuItemStack menuItemStack = kit.getMenuItems().get(index);
             inventory.addItem(slot, menuItemStack.build(player, false));
         }
     }

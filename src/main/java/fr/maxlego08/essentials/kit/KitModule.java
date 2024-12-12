@@ -1,9 +1,12 @@
 package fr.maxlego08.essentials.kit;
 
+import com.google.gson.*;
 import fr.maxlego08.essentials.ZEssentialsPlugin;
 import fr.maxlego08.essentials.api.commands.Permission;
+import fr.maxlego08.essentials.api.dto.KitDTO;
 import fr.maxlego08.essentials.api.kit.Kit;
 import fr.maxlego08.essentials.api.kit.KitDisplay;
+import fr.maxlego08.essentials.api.kit.KitStorage;
 import fr.maxlego08.essentials.api.messages.Message;
 import fr.maxlego08.essentials.api.user.User;
 import fr.maxlego08.essentials.module.ZModule;
@@ -11,9 +14,9 @@ import fr.maxlego08.essentials.zutils.utils.TimerBuilder;
 import fr.maxlego08.menu.MenuItemStack;
 import fr.maxlego08.menu.api.requirement.Action;
 import fr.maxlego08.menu.api.utils.Placeholders;
-import fr.maxlego08.menu.exceptions.InventoryException;
 import fr.maxlego08.menu.loader.MenuItemStackLoader;
 import fr.maxlego08.menu.zcore.utils.loader.Loader;
+import fr.maxlego08.menu.zcore.utils.nms.ItemStackUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -27,17 +30,15 @@ import org.bukkit.permissions.Permissible;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class KitModule extends ZModule {
 
     private final List<Kit> kits = new ArrayList<>();
-    private KitDisplay display;
+    private final Gson gson = new GsonBuilder().create();
+    private final KitStorage storage = KitStorage.YAML;
+    private final KitDisplay display = KitDisplay.IN_LINE;
 
     public KitModule(ZEssentialsPlugin plugin) {
         super(plugin, "kits");
@@ -47,8 +48,6 @@ public class KitModule extends ZModule {
     @Override
     public void loadConfiguration() {
         super.loadConfiguration();
-
-        this.display = KitDisplay.valueOf(getConfiguration().getString("display", KitDisplay.IN_LINE.name()));
 
         this.loadKits();
 
@@ -68,6 +67,14 @@ public class KitModule extends ZModule {
 
         this.kits.clear();
 
+        if (storage == KitStorage.YAML) {
+            this.loadKitsFromYaml();
+        } else {
+            this.loadKitsFromDatabase();
+        }
+    }
+
+    private void loadKitsFromYaml() {
         YamlConfiguration configuration = getConfiguration();
         File file = new File(getFolder(), "config.yml");
 
@@ -85,14 +92,14 @@ public class KitModule extends ZModule {
             ConfigurationSection configurationSectionItems = configuration.getConfigurationSection(path + "items");
             if (configurationSectionItems == null) continue;
 
-            List<MenuItemStack> menuItemStacks = new ArrayList<>();
+            List<ItemStack> items = new ArrayList<>();
+            List<MenuItemStack> menuItem = new ArrayList<>();
 
             for (String itemName : configurationSectionItems.getKeys(false)) {
-                try {
-                    menuItemStacks.add(loader.load(configuration, path + "items." + itemName + ".", file));
-                } catch (InventoryException exception) {
-                    exception.printStackTrace();
-                }
+                String base64 = configuration.getString(path + "items." + itemName + ".base64");
+                if (base64 == null) continue;
+                items.add(ItemStackUtils.deserializeItemStack(base64));
+                menuItem.add(MenuItemStack.fromItemStack(this.plugin.getInventoryManager(), items.get(items.size() - 1)));
             }
 
             if (this.exist(name)) {
@@ -101,15 +108,71 @@ public class KitModule extends ZModule {
             }
 
             List<Action> actions = this.plugin.getButtonManager().loadActions((List<Map<String, Object>>) configuration.getList(path + "actions", new ArrayList<>()), path, file);
-
-            Kit kit = new ZKit(plugin, name, key, cooldown, menuItemStacks, actions);
+            Kit kit = new ZKit(plugin, name, key, cooldown, items, menuItem, actions);
             this.kits.add(kit);
             this.plugin.getLogger().info("Register kit: " + name);
         }
     }
 
-    public void saveKits() {
+    private void loadKitsFromDatabase() {
+        List<KitDTO> kits = plugin.getStorageManager().getStorage().getKits();
 
+        for (KitDTO kitDTO : kits) {
+            List<String> itemStrings = parseBracketedList(kitDTO.items());
+            List<ItemStack> items = itemStrings.stream()
+                    .map(ItemStackUtils::deserializeItemStack)
+                    .toList();
+
+            List<MenuItemStack> menuItemStacks = items.stream()
+                    .map(item -> MenuItemStack.fromItemStack(plugin.getInventoryManager(), item))
+                    .toList();
+
+            List<String> actionStrings = parseBracketedList(kitDTO.actions());
+            List<Action> actions = actionStrings.stream()
+                    .map(actionStr -> gson.fromJson(actionStr, Action.class))
+                    .toList();
+
+            Kit kit = new ZKit(
+                    plugin,
+                    kitDTO.displayName(),
+                    kitDTO.name(),
+                    kitDTO.cooldown(),
+                    items,
+                    menuItemStacks,
+                    actions
+            );
+
+            if (this.exist(kit.getName())) {
+                plugin.getLogger().severe("Kit " + kit.getName() + " already exists!");
+                continue;
+            }
+
+            this.kits.add(kit);
+            plugin.getLogger().info("Registered kit: " + kitDTO.name());
+        }
+    }
+
+    private List<String> parseBracketedList(String input) {
+        if (input == null || input.length() < 2) {
+            return Collections.emptyList();
+        }
+        String trimmed = input.substring(1, input.length() - 1).trim();
+        if (trimmed.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(trimmed.split(", "));
+    }
+
+
+    public void saveKits() {
+        if (storage == KitStorage.YAML) {
+            saveKitsToYaml();
+        } else {
+            saveKitsToDatabase();
+        }
+    }
+
+    private void saveKitsToYaml() {
         YamlConfiguration configuration = getConfiguration();
         File file = new File(getFolder(), "config.yml");
         if (!file.exists()) {
@@ -133,11 +196,11 @@ public class KitModule extends ZModule {
 
             if (kit.getCooldown() > 0) configuration.set(path + "cooldown", kit.getCooldown());
             else configuration.set(path + "cooldown", null);
-
-            Loader<MenuItemStack> loader = new MenuItemStackLoader(this.plugin.getInventoryManager());
             AtomicInteger atomicInteger = new AtomicInteger(1);
-            kit.getMenuItemStacks().forEach(menuItemStack -> loader.save(menuItemStack, configuration, path + "items.item" + atomicInteger.getAndIncrement() + ".", file));
-
+            kit.getItems().forEach(item -> {
+                String base64 = ItemStackUtils.serializeItemStack(item);
+                configuration.set(path + "items.item" + atomicInteger.getAndIncrement() + ".base64", base64);
+            });
         });
 
         try {
@@ -145,7 +208,19 @@ public class KitModule extends ZModule {
         } catch (IOException exception) {
             exception.printStackTrace();
         }
+    }
 
+    private void saveKitsToDatabase() {
+        this.kits.forEach(kit -> {
+            List<String> items = new ArrayList<>();
+            kit.getItems().forEach(item -> {
+                String base64 = ItemStackUtils.serializeItemStack(item);
+                items.add(base64);
+            });
+            List<String> actions = new ArrayList<>();
+            kit.getActions().forEach(action -> actions.add(gson.toJson(action)));
+            plugin.getStorageManager().getStorage().createKit(kit.getName(), kit.getDisplayName(), kit.getCooldown(), actions, items);
+        });
     }
 
     public List<Kit> getKits(Permissible permissible) {
@@ -227,13 +302,16 @@ public class KitModule extends ZModule {
         if (event.getInventory().getHolder() instanceof KitInventoryHolder inventoryHolder) {
 
             Kit kit = inventoryHolder.getKit();
-            List<MenuItemStack> menuItemStacks = new ArrayList<>();
+            List<MenuItemStack> menuItems = new ArrayList<>();
+            List<ItemStack> items = new ArrayList<>();
             for (ItemStack itemStack : event.getInventory().getContents()) {
                 if (itemStack != null) {
-                    menuItemStacks.add(MenuItemStack.fromItemStack(this.plugin.getInventoryManager(), itemStack));
+                    menuItems.add(MenuItemStack.fromItemStack(this.plugin.getInventoryManager(), itemStack));
+                    items.add(itemStack);
                 }
             }
-            kit.setItems(menuItemStacks);
+            kit.setMenuItems(menuItems);
+            kit.setItems(items);
             this.saveKits();
             message(event.getPlayer(), Message.COMMAND_KIT_EDITOR_SAVE, "%kit%", kit.getName());
         }
@@ -241,7 +319,7 @@ public class KitModule extends ZModule {
 
     public void createKit(Player player, String kitName, long cooldown) {
 
-        Kit kit = new ZKit(plugin, kitName, kitName, cooldown, new ArrayList<>(), new ArrayList<>());
+        Kit kit = new ZKit(plugin, kitName, kitName, cooldown, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         this.kits.add(kit);
         this.saveKits();
 

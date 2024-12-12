@@ -1,5 +1,6 @@
 package fr.maxlego08.essentials.api.storage;
 
+import fr.maxlego08.essentials.api.dto.*;
 import fr.maxlego08.essentials.api.dto.ChatMessageDTO;
 import fr.maxlego08.essentials.api.dto.CooldownDTO;
 import fr.maxlego08.essentials.api.dto.EconomyDTO;
@@ -521,4 +522,29 @@ public interface IStorage {
      * @param worldName the world name
      */
     void deleteWorldData(String worldName);
+
+    /**
+     * Insert kit data.
+     *
+     * @param key        the key
+     * @param displayName the display name
+     * @param cooldown   the cooldown
+     * @param actions    the list of action
+     * @param items      the list of items
+     */
+    void createKit(String key, String displayName, long cooldown, List<String> actions, List<String> items);
+
+    /**
+     * Retrieves kits.
+     *
+     * @return the list of kits
+     */
+    List<KitDTO> getKits();
+
+    /**
+     * Deletes a kit.
+     *
+     * @param key the key
+     */
+    void deleteKit(String key);
 }

@@ -20,6 +20,12 @@ enable: true
 # MULTI_LINE: Displays a message with a header and footer (optional) and a message per kits
 display: IN_LINE
 
+# Change the way the kits are stored
+#
+# YAML: Store the kits in a YAML file
+# DATABASE: Store the kits in a database
+storage: DATABASE
+
 # https://docs.zmenu.dev/configurations/items
 kits:
   tools:

@@ -19,6 +19,7 @@ import fr.maxlego08.essentials.api.dto.UserEconomyRankingDTO;
 import fr.maxlego08.essentials.api.dto.UserVoteDTO;
 import fr.maxlego08.essentials.api.dto.VaultDTO;
 import fr.maxlego08.essentials.api.dto.VaultItemDTO;
+import fr.maxlego08.essentials.api.dto.*;
 import fr.maxlego08.essentials.api.economy.Economy;
 import fr.maxlego08.essentials.api.home.Home;
 import fr.maxlego08.essentials.api.mailbox.MailBoxItem;
@@ -52,25 +53,10 @@ import fr.maxlego08.essentials.migrations.UpdateUserTableAddFlyColumn;
 import fr.maxlego08.essentials.migrations.UpdateUserTableAddFreezeColumn;
 import fr.maxlego08.essentials.migrations.UpdateUserTableAddSanctionColumns;
 import fr.maxlego08.essentials.migrations.UpdateUserTableAddVoteColumn;
+import fr.maxlego08.essentials.migrations.*;
 import fr.maxlego08.essentials.storage.database.Repositories;
 import fr.maxlego08.essentials.storage.database.Repository;
-import fr.maxlego08.essentials.storage.database.repositeries.ChatMessagesRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.CommandsRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.EconomyTransactionsRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.PlayerSlotRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.ServerStorageRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserCooldownsRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserEconomyRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserHomeRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserMailBoxRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserOptionRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserPlayTimeRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserPowerToolsRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.UserSanctionRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.VaultItemRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.VaultRepository;
-import fr.maxlego08.essentials.storage.database.repositeries.VoteSiteRepository;
+import fr.maxlego08.essentials.storage.database.repositeries.*;
 import fr.maxlego08.essentials.user.ZUser;
 import fr.maxlego08.essentials.zutils.utils.StorageHelper;
 import fr.maxlego08.menu.zcore.utils.nms.ItemStackUtils;
@@ -148,6 +134,7 @@ public class SqlStorage extends StorageHelper implements IStorage {
         MigrationManager.registerMigration(new CreatePlayerSlots());
         MigrationManager.registerMigration(new UpdateUserTableAddFreezeColumn());
         MigrationManager.registerMigration(new UpdateUserTableAddFlyColumn());
+        MigrationManager.registerMigration(new CreateKitTableMigration());
         MigrationManager.registerMigration(new UpdateEconomyTransactionAddColumn());
 
         // Repositories
@@ -169,6 +156,7 @@ public class SqlStorage extends StorageHelper implements IStorage {
         this.repositories.register(PlayerSlotRepository.class);
         this.repositories.register(VaultItemRepository.class);
         this.repositories.register(VaultRepository.class);
+        this.repositories.register(KitRepository.class);
 
         MigrationManager.execute(this.connection, JULogger.from(this.plugin.getLogger()));
 
@@ -607,6 +595,21 @@ public class SqlStorage extends StorageHelper implements IStorage {
     public void deleteWorldData(String worldName) {
         with(UserRepository.class).deleteWorldData(worldName);
         with(UserHomeRepository.class).deleteWorldData(worldName);
+    }
+
+    @Override
+    public void createKit(String key, String displayName, long cooldown, List<String> actions, List<String> items) {
+        async(() -> with(KitRepository.class).upsert(key, displayName, cooldown, actions, items));
+    }
+
+    @Override
+    public List<KitDTO> getKits() {
+        return with(KitRepository.class).select();
+    }
+
+    @Override
+    public void deleteKit(String key) {
+        with(KitRepository.class).delete(key);
     }
 
     public DatabaseConnection getConnection() {

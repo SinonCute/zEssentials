@@ -26,6 +26,11 @@ display: IN_LINE
 # DATABASE: Store the kits in a database
 storage: DATABASE
 
+# Kit first join
+#
+# If the player has never joined the server, he will receive the kit
+kit-first-join: none
+
 # https://docs.zmenu.dev/configurations/items
 kits:
   tools:

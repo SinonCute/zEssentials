@@ -18,12 +18,14 @@ import fr.maxlego08.menu.loader.MenuItemStackLoader;
 import fr.maxlego08.menu.zcore.utils.loader.Loader;
 import fr.maxlego08.menu.zcore.utils.nms.ItemStackUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.Permissible;
@@ -39,6 +41,7 @@ public class KitModule extends ZModule {
     private final Gson gson = new GsonBuilder().create();
     private final KitStorage storage = KitStorage.YAML;
     private final KitDisplay display = KitDisplay.IN_LINE;
+    private String kitFirstJoin;
 
     public KitModule(ZEssentialsPlugin plugin) {
         super(plugin, "kits");
@@ -315,6 +318,17 @@ public class KitModule extends ZModule {
             this.saveKits();
             message(event.getPlayer(), Message.COMMAND_KIT_EDITOR_SAVE, "%kit%", kit.getName());
         }
+    }
+
+    @EventHandler
+    public void onConnect(PlayerJoinEvent event) {
+        User user = this.getUser(event.getPlayer());
+
+        Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+            if (user.isFirstJoin()) {
+                this.getKit(kitFirstJoin).ifPresent(kit -> this.giveKit(user, kit, true));
+            }
+        }, 20L);
     }
 
     public void createKit(Player player, String kitName, long cooldown) {

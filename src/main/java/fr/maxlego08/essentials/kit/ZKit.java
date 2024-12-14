@@ -20,15 +20,13 @@ public class ZKit extends ZUtils implements Kit {
     private final long cooldown;
     private final List<Action> actions;
     private List<ItemStack> items;
-    private List<MenuItemStack> menuItems;
 
-    public ZKit(EssentialsPlugin plugin, String displayName, String name, long cooldown, List<ItemStack> items, List<MenuItemStack> menuItems, List<Action> actions) {
+    public ZKit(EssentialsPlugin plugin, String displayName, String name, long cooldown, List<ItemStack> items, List<Action> actions) {
         this.plugin = plugin;
         this.displayName = displayName;
         this.name = name;
         this.cooldown = cooldown;
         this.items = items;
-        this.menuItems = menuItems;
         this.actions = actions;
     }
 
@@ -51,20 +49,12 @@ public class ZKit extends ZUtils implements Kit {
     }
 
     @Override
-    public List<MenuItemStack> getMenuItems() {
-        return menuItems;
-    }
-
-    @Override
     public void give(Player player) {
         this.items.forEach(item -> this.plugin.give(player, item));
     }
 
     @Override
     public void setItems(List<ItemStack> menuItemStacks) { this.items = menuItemStacks; }
-
-    @Override
-    public void setMenuItems(List<MenuItemStack> items) { this.menuItems = items; }
 
     @Override
     public List<Action> getActions() {

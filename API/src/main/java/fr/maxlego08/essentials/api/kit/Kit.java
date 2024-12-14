@@ -42,12 +42,6 @@ public interface Kit {
      */
     List<ItemStack> getItems();
 
-    /**
-     * Gets the list of menu item stacks associated with this kit.
-     *
-     * @return a list of {@link MenuItemStack} objects
-     */
-    List<MenuItemStack> getMenuItems();
 
     /**
      * Gives the kit to the specified player.
@@ -62,13 +56,6 @@ public interface Kit {
      * @param menuItemStacks the list of {@link MenuItemStack} objects to set
      */
     void setItems(List<ItemStack> menuItemStacks);
-
-    /**
-     * Sets the menu items in the kit using a list of menu item stacks.
-     *
-     * @param items the list of {@link MenuItemStack} objects to set
-     */
-    void setMenuItems(List<MenuItemStack> items);
 
     /**
      * Gets the list of actions associated with this kit.

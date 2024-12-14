@@ -96,13 +96,11 @@ public class KitModule extends ZModule {
             if (configurationSectionItems == null) continue;
 
             List<ItemStack> items = new ArrayList<>();
-            List<MenuItemStack> menuItem = new ArrayList<>();
 
             for (String itemName : configurationSectionItems.getKeys(false)) {
                 String base64 = configuration.getString(path + "items." + itemName + ".base64");
                 if (base64 == null) continue;
                 items.add(ItemStackUtils.deserializeItemStack(base64));
-                menuItem.add(MenuItemStack.fromItemStack(this.plugin.getInventoryManager(), items.get(items.size() - 1)));
             }
 
             if (this.exist(name)) {
@@ -111,7 +109,7 @@ public class KitModule extends ZModule {
             }
 
             List<Action> actions = this.plugin.getButtonManager().loadActions((List<Map<String, Object>>) configuration.getList(path + "actions", new ArrayList<>()), path, file);
-            Kit kit = new ZKit(plugin, name, key, cooldown, items, menuItem, actions);
+            Kit kit = new ZKit(plugin, name, key, cooldown, items, actions);
             this.kits.add(kit);
             this.plugin.getLogger().info("Register kit: " + name);
         }
@@ -141,7 +139,6 @@ public class KitModule extends ZModule {
                     kitDTO.name(),
                     kitDTO.cooldown(),
                     items,
-                    menuItemStacks,
                     actions
             );
 
@@ -305,15 +302,12 @@ public class KitModule extends ZModule {
         if (event.getInventory().getHolder() instanceof KitInventoryHolder inventoryHolder) {
 
             Kit kit = inventoryHolder.getKit();
-            List<MenuItemStack> menuItems = new ArrayList<>();
             List<ItemStack> items = new ArrayList<>();
             for (ItemStack itemStack : event.getInventory().getContents()) {
                 if (itemStack != null) {
-                    menuItems.add(MenuItemStack.fromItemStack(this.plugin.getInventoryManager(), itemStack));
                     items.add(itemStack);
                 }
             }
-            kit.setMenuItems(menuItems);
             kit.setItems(items);
             this.saveKits();
             message(event.getPlayer(), Message.COMMAND_KIT_EDITOR_SAVE, "%kit%", kit.getName());
@@ -333,7 +327,7 @@ public class KitModule extends ZModule {
 
     public void createKit(Player player, String kitName, long cooldown) {
 
-        Kit kit = new ZKit(plugin, kitName, kitName, cooldown, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        Kit kit = new ZKit(plugin, kitName, kitName, cooldown, new ArrayList<>(), new ArrayList<>());
         this.kits.add(kit);
         this.saveKits();
 

@@ -1,11 +1,11 @@
 package fr.maxlego08.essentials.kit;
 
 import fr.maxlego08.essentials.api.kit.Kit;
-import fr.maxlego08.menu.MenuItemStack;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class KitInventoryHolder implements InventoryHolder {
@@ -19,9 +19,9 @@ public class KitInventoryHolder implements InventoryHolder {
         this.kit = kit;
         this.inventory = Bukkit.createInventory(this, 54, "Kit Editor: " + kit.getName());
 
-        for (int index = 0; index != Math.min(54, kit.getMenuItems().size()); index++) {
-            MenuItemStack menuItemStack = kit.getMenuItems().get(index);
-            inventory.setItem(index, menuItemStack.build(player, false));
+        for (int index = 0; index != Math.min(54, kit.getItems().size()); index++) {
+            ItemStack itemStack = kit.getItems().get(index);
+            inventory.setItem(index, itemStack);
         }
     }
 
